@@ -2,13 +2,10 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { callCloudFlareApi } from './lib/call-api';
 
+const argv = hideBin(process.argv);
+
 async function exec(referrer_id: string, debug = false) {
   try {
-    if (referrer_id.length < 30) {
-      console.error('Client ID is not valid');
-      process.exit(1);
-    }
-
     console.log(`Adding 1 GB to ${referrer_id}`);
     const res = await callCloudFlareApi(referrer_id);
     if (res.ok) {
@@ -25,10 +22,11 @@ async function exec(referrer_id: string, debug = false) {
         (error as unknown as any).message
       }`
     );
+    process.exit(1);
   }
 }
 
-yargs(hideBin(process.argv))
+yargs(argv)
   .scriptName('warp-plus')
   .alias('warp-plus', 'wp')
   .option('debug', {
@@ -37,15 +35,23 @@ yargs(hideBin(process.argv))
     type: 'boolean',
     default: false,
     global: true,
+    demandOption: true,
   })
   .command(
     'add <id>',
     'Add 1 GB to Client ID',
     (yargs) =>
-      yargs.positional('id', {
-        description: 'CloudFlare Warp Client ID',
-        type: 'string',
-      }),
+      yargs
+        .positional('id', {
+          description: 'CloudFlare Warp Client ID',
+          type: 'string',
+        })
+        .check((argv) => {
+          if (argv.id!.length < 30) {
+            throw new Error('Client ID is not valid');
+          }
+          return true;
+        }),
     (argv) => exec(argv.id!, argv.debug)
   )
   .command(
@@ -62,12 +68,25 @@ yargs(hideBin(process.argv))
           description: 'Interval in seconds',
           type: 'number',
           default: 20,
+          demandOption: true,
         })
         .option('loop', {
           alias: 'l',
           description: 'How many times to loop? (Negative number for infinite)',
           type: 'number',
           default: -1,
+          demandOption: true,
+        })
+        .default('interval', 20, '20 seconds')
+        .default('loop', -1, 'Infinite')
+        .check((argv) => {
+          if (argv.interval < 20) {
+            throw new Error('Interval must be greater than 20 seconds');
+          }
+          if (argv.id!.length < 30) {
+            throw new Error('Client ID is not valid');
+          }
+          return true;
         }),
     async (argv) => {
       console.log(
@@ -95,10 +114,14 @@ yargs(hideBin(process.argv))
     }
   )
   .fail((msg, err) => {
-    if (err) {
+    console.error(msg || err.message);
+    if (
+      err instanceof Error &&
+      (argv.includes('-d') || argv.includes('--debug'))
+    ) {
       console.error(err);
     }
-    console.error(msg);
+    process.exit(1);
   })
   .help()
   .alias('help', 'h')
@@ -107,5 +130,6 @@ yargs(hideBin(process.argv))
   })
   .alias('version', 'v')
   .demandCommand(1, 'You need to specify at least one command before moving on')
+  .showHelpOnFail(true, "For more information, run 'warp-plus --help'")
   .recommendCommands()
   .parse();
