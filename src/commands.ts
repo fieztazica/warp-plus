@@ -98,7 +98,7 @@ yargs(hideBin(process.argv))
   .help()
   .alias('help', 'h')
   .showVersion(() => {
-    return require('./package.json').version;
+    return require('../package.json').version;
   })
   .alias('version', 'v')
   .demandCommand(1, 'You need to specify at least one command before moving on')

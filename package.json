@@ -11,8 +11,8 @@
     "typescript": "^5.0.0"
   },
   "bin": {
-    "warp-plus": "./index.ts",
-    "wp": "./index.ts"
+    "warp-plus": "./src/index.ts",
+    "wp": "./src/index.ts"
   },
   "dependencies": {
     "yargs": "^17.7.2"
