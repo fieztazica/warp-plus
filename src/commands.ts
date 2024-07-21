@@ -4,6 +4,11 @@ import { callCloudFlareApi } from './lib/call-api';
 
 async function exec(referrer_id: string, debug = false) {
   try {
+    if (referrer_id.length < 30) {
+      console.error('Client ID is not valid');
+      process.exit(1);
+    }
+
     console.log(`Adding 1 GB to ${referrer_id}`);
     const res = await callCloudFlareApi(referrer_id);
     if (res.ok) {

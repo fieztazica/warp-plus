@@ -4,9 +4,6 @@ const host = 'api.cloudflareclient.com'
 const cloudFlareApiBaseUrl = new URL(`https://${host}`);
 
 export async function callCloudFlareApi(referrer_id: string) {
-  if (referrer_id.length < 30) {
-    throw new Error('Client ID is not valid');
-  }
   const install_id = genString(22);
   const url = new URL(`/v0a${digitString(3)}/reg`, cloudFlareApiBaseUrl);
   const response = await fetch(url.toString(), {
